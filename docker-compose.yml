@@ -11,4 +11,4 @@ services:
       - GO111MODULE=on
     ports:
       - "8080:8080"
-    command: "go run /go/src/github.com/sys-cat/imageapi_for_advent2019/main.go"
+    command: "go run main.go"

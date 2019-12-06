@@ -14,3 +14,4 @@
 # local files
 .idea
 go.sum
+tmp/**
