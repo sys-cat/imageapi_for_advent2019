@@ -7,8 +7,8 @@ import (
 	"image"
 	"net/http"
 	"os"
-	_ "image/jpeg"
-	"github.com/sys-cat/go-libwebp/webp"
+	"image/jpeg"
+	"github.com/harukasan/go-libwebp/webp"
 )
 
 type (
@@ -31,27 +31,22 @@ func handler(c echo.Context) error {
 			Message:"file not found",
 		})
 	}
-	defer f.Close()
 
-	img, _, err := image.Decode(f)
+	img, err := jpeg.Decode(f)
 	if err != nil {
 		return c.JSON(http.StatusGone, &Error{Message:"File is gone"})
 	}
 	bou := img.Bounds()
 
-	newimg := image.NewNRGBA(image.Rect(0, 0, bou.Dx(), bou.Dy()))
 	o, err := os.Create("tmp/New.webp")
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, &Error{Message:"create new image is failed"})
 	}
 	w := bufio.NewWriter(o)
-	defer func() {
-		w.Flush()
-		o.Close()
-	}()
+
 
 	config, _ := webp.ConfigPreset(webp.PresetDefault, 90)
-	if err = webp.EncodeRGBA(w, newimg, config);err != nil {
+	if err = webp.EncodeRGBA(w, image.NewRGBA(image.Rect(0, 0, bou.Dx(), bou.Dy())), config);err != nil {
 		return c.JSON(http.StatusInternalServerError, &Error{Message:"convert image is failed"})
 	}
 
@@ -60,6 +55,10 @@ func handler(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, &Error{Message:"cant get converted image"})
 	}
 	bouN := img.Bounds()
+
+	w.Flush()
+	o.Close()
+	f.Close()
 
 	return c.String(http.StatusOK, fmt.Sprintf("jpeg image X size : %d, Y size: %d\nwebp image X size : %d, Y size : %c\n", bou.Dx(), bou.Dy(), bouN.Dx(), bouN.Dy()))
 }
