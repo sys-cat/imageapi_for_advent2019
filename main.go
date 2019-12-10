@@ -1,14 +1,10 @@
 package main
 
 import (
-	"bufio"
-	"fmt"
 	"github.com/labstack/echo"
-	"image"
 	"net/http"
 	"os"
 	"image/jpeg"
-	"github.com/harukasan/go-libwebp/webp"
 )
 
 type (
@@ -42,25 +38,12 @@ func handler(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, &Error{Message:"create new image is failed"})
 	}
-	w := bufio.NewWriter(o)
 
+	defer func() {
+		o.Close()
+		f.Close()
+	}()
 
-	config, _ := webp.ConfigPreset(webp.PresetDefault, 90)
-	if err = webp.EncodeRGBA(w, image.NewRGBA(image.Rect(0, 0, bou.Dx(), bou.Dy())), config);err != nil {
-		return c.JSON(http.StatusInternalServerError, &Error{Message:"convert image is failed"})
-	}
-
-	img, _, err = image.Decode(o)
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, &Error{Message:"cant get converted image"})
-	}
-	bouN := img.Bounds()
-
-	w.Flush()
-	o.Close()
-	f.Close()
-
-	return c.String(http.StatusOK, fmt.Sprintf("jpeg image X size : %d, Y size: %d\nwebp image X size : %d, Y size : %c\n", bou.Dx(), bou.Dy(), bouN.Dx(), bouN.Dy()))
 }
 
 func main() {

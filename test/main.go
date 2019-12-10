@@ -2,47 +2,83 @@ package main
 
 import (
 	"fmt"
-	"github.com/nickalie/go-webpbin"
+	"image"
+	"golang.org/x/image/draw"
+	"image/jpeg"
+	"image/png"
 	"os"
 )
+
 func main() {
-	i, _ := os.Open("Go-Logo_LightBlue.png")
-	o, _ := os.Create("New.webp")
-	err := webpbin.NewCWebP().Quality(90).Input(i).Output(o).Run()
+	// JPEG
+	j, err := os.Open("../tmp/Go-Logo_LightBlue.jpg")
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("Completed")
+	defer j.Close()
+	img, err := jpeg.Decode(j)
+	if err != nil {
+		panic(err)
+	}
+	bound := img.Bounds()
+	fmt.Printf("Before\tGo-Logo_LightBlue.jpg\tX : %d px, Y : %d px\n", bound.Dx(), bound.Dy())
+
+	dst := image.NewRGBA(image.Rect(0, 0, bound.Dx()/2, bound.Dy()/2))
+	draw.CatmullRom.Scale(dst, dst.Bounds(), img, bound, draw.Over, nil)
+
+	jOutput, err := os.Create("./new.jpg")
+	if err != nil {
+		panic(err)
+	}
+	defer jOutput.Close()
+
+	err = jpeg.Encode(jOutput, dst, &jpeg.Options{Quality: 100})
+	if err != nil {
+		panic(err)
+	}
+
+	reopen, err := os.Open("./new.jpg")
+	if err != nil {
+		panic(err)
+	}
+	defer reopen.Close()
+	img, _ = jpeg.Decode(reopen)
+	bound = img.Bounds()
+	fmt.Printf("After\tGo-Logo_LightBlue.jpg\tX : %d px, Y : %d px\n", bound.Dx(), bound.Dy())
+
+	// PNG
+	p, err := os.Open("../tmp/Go-Logo_Yellow.png")
+	if err != nil {
+		panic(err)
+	}
+	defer p.Close()
+	img, err = png.Decode(p)
+	if err != nil {
+		panic(err)
+	}
+	bound = img.Bounds()
+	fmt.Printf("Before\tGo-Logo_Yellow.png\tX : %d px, Y : %d px\n", bound.Dx(), bound.Dy())
+
+	dst = image.NewRGBA(image.Rect(0, 0, bound.Dx()/2, bound.Dy()/2))
+	draw.CatmullRom.Scale(dst, dst.Bounds(), img, bound, draw.Over, nil)
+
+	pOutput, err := os.Create("./new.png")
+	if err != nil {
+		panic(err)
+	}
+	defer pOutput.Close()
+
+	err = png.Encode(pOutput, dst)
+	if err != nil {
+		panic(err)
+	}
+
+	reopen, err = os.Open("./new.png")
+	if err != nil {
+		panic(err)
+	}
+	defer reopen.Close()
+	img, _ = png.Decode(reopen)
+	bound = img.Bounds()
+	fmt.Printf("After\tGo-Logo_Yellow.png\tX : %d px, Y : %d px\n", bound.Dx(), bound.Dy())
 }
-
-/*
-func main() {
-	f, err := os.Open("Go-Logo_LightBlue.png")
-	if err != nil {
-		panic(err)
-	}
-	defer f.Close()
-
-	img, err := png.Decode(f)
-	if err != nil {
-		panic(err)
-	}
-	bou := img.Bounds()
-
-	o, err := os.Create("New.webp")
-	if err != nil {
-		panic(err)
-	}
-	w := bufio.NewWriter(o)
-
-	config, _ := webp.ConfigPreset(webp.PresetDefault, 90)
-	m := image.NewNRGBA(image.Rect(0, 0, bou.Dx(), bou.Dy()))
-	draw.Draw(m, m.Bounds(), img, bou.Min, draw.Src)
-	if err = webp.EncodeRGBA(w, img, config); err != nil {
-		panic(err)
-	}
-
-	w.Flush()
-	o.Close()
-}
- */
